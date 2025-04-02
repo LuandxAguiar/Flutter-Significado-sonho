@@ -48,5 +48,8 @@ Comando para iniciar:
 node index.mjs
 Certifique-se de colocar sua chave da API no código com segurança.
 
+### Em desenvolvimento
+ Verificando melhor forma de cobrança sobre API Platform | OpenAI 
+
 ✨ Autor
 - LuandxAguiar
