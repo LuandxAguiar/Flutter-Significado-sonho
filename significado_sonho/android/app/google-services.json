@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "137345763803",
+    "project_id": "significado-sonho",
+    "storage_bucket": "significado-sonho.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:137345763803:android:49aeee5c44a21b08cc3ffe",
+        "android_client_info": {
+          "package_name": "com.luandxa.significado_sonho"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMlJJnaLFOOxFYz5h0j0xlKDO5PaJajtM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

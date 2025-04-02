@@ -1,0 +1,2 @@
+# Significado-sonho
+ Aplicativo simples e intuitivo desenvolvido em Flutter, com integração ao Firebase, para interpretar sonhos de forma interativa e salvar o histórico do usuário. O app permite ao usuário:  Digitar e enviar seu sonho  Receber uma interpretação automática (via IA ou mock)  Salvar os sonhos e respostas no Firestore  Visualizar o histórico de interpretações  A proposta do app é oferecer uma experiência leve e acolhedora, onde o usuário possa se expressar e refletir sobre seus sonhos, com a ajuda da tecnologia.
