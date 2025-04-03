@@ -23,7 +23,7 @@ app.post('/interpretar', async (req, res) => {
 
   try {
     const respostaIA = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: 'Você é um especialista em interpretação de sonhos, com empatia e sabedoria.' },
         { role: 'user', content: `Interprete este sonho: ${sonho}` },
