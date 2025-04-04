@@ -1,10 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
-import 'package:intl/intl.dart'; // 💡 Para formatar data/hora
+import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,16 @@ class _InterpretadorDeSonhosState extends State<InterpretadorDeSonhos> {
   String? _resposta;
   bool _carregando = false;
 
+  Future<void> mostrarRespostaComEfeito(String respostaCompleta) async {
+    _resposta = '';
+    for (int i = 0; i < respostaCompleta.length; i++) {
+      await Future.delayed(Duration(milliseconds: 20));
+      setState(() {
+        _resposta = respostaCompleta.substring(0, i + 1);
+      });
+    }
+  }
+
   void interpretarSonho() async {
     final sonho = _controller.text.trim();
 
@@ -54,22 +65,41 @@ class _InterpretadorDeSonhosState extends State<InterpretadorDeSonhos> {
       _resposta = null;
     });
 
-    await Future.delayed(Duration(seconds: 2)); // Simula IA
-    final resposta = "Esse sonho pode indicar emoções profundas ou desejos não realizados.";
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:3001/interpretar'), // troque por IP real se for celular
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'sonho': sonho}),
+      );
 
-    setState(() {
-      _resposta = resposta;
-      _carregando = false;
-    });
+      if (response.statusCode == 200) {
+        final respostaJson = jsonDecode(response.body);
+        final resposta = respostaJson['resposta'];
 
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? "desconhecido";
+        await mostrarRespostaComEfeito(resposta);
 
-    await FirebaseFirestore.instance.collection("sonhos").add({
-      "uid": uid,
-      "sonho": sonho,
-      "resposta": resposta,
-      "data": FieldValue.serverTimestamp(),
-    });
+        final uid = FirebaseAuth.instance.currentUser?.uid ?? "desconhecido";
+
+        await FirebaseFirestore.instance.collection("sonhos").add({
+          "uid": uid,
+          "sonho": sonho,
+          "resposta": resposta,
+          "data": FieldValue.serverTimestamp(),
+        });
+      } else {
+        setState(() {
+          _resposta = "Erro ao interpretar o sonho.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _resposta = "Erro de conexão com o servidor.";
+      });
+    } finally {
+      setState(() {
+        _carregando = false;
+      });
+    }
   }
 
   void abrirHistorico() {
@@ -79,54 +109,100 @@ class _InterpretadorDeSonhosState extends State<InterpretadorDeSonhos> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Me conte seu sonho"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.history),
-            tooltip: "Ver histórico",
-            onPressed: abrirHistorico,
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text("Me conte seu sonho"),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.history),
+          tooltip: "Ver histórico",
+          onPressed: abrirHistorico,
+        ),
+      ],
+    ),
+    body: SafeArea(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.deepPurple.shade100, Colors.deepPurple.shade400],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _controller,
-              maxLines: 6,
-              decoration: InputDecoration(
-                hintText: "Digite seu sonho aqui...",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _carregando ? null : interpretarSonho,
-              child: Text("Interpretar"),
-            ),
-            const SizedBox(height: 24),
-            if (_carregando) CircularProgressIndicator(),
-            if (_resposta != null && !_carregando)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _controller,
+                  maxLines: 6,
+                  maxLength: 250,
+                  decoration: InputDecoration(
+                    hintText: "Digite seu sonho aqui...",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  _resposta!,
-                  style: TextStyle(fontSize: 16),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _carregando ? null : interpretarSonho,
+                  icon: Icon(Icons.auto_awesome),
+                  label: Text("Interpretar"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-              ),
-          ],
+                const SizedBox(height: 24),
+                if (_carregando)
+                  Center(child: CircularProgressIndicator()),
+                if (_resposta != null && !_carregando)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(top: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurple.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.auto_awesome, color: Colors.deepPurple),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _resposta!,
+                            style: TextStyle(fontSize: 16, height: 1.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class HistoricoSonhos extends StatelessWidget {

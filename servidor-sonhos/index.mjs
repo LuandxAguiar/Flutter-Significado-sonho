@@ -2,7 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import OpenAI from 'openai';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -11,7 +13,7 @@ app.use(bodyParser.json());
 
 // 🔒 Coloque sua chave da OpenAI aqui
 const openai = new OpenAI({
-  apiKey: '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', // substitua pela sua chave secreta
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 app.post('/interpretar', async (req, res) => {
@@ -23,7 +25,7 @@ app.post('/interpretar', async (req, res) => {
 
   try {
     const respostaIA = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: 'Você é um especialista em interpretação de sonhos, com empatia e sabedoria.' },
         { role: 'user', content: `Interprete este sonho: ${sonho}` },
