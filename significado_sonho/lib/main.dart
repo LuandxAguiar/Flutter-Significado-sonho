@@ -10,11 +10,10 @@ import 'dart:convert';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  await FirebaseAuth.instance.signInAnonymously();
+  // Verifica se o Firebase já está inicializado para evitar duplicidade
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp();
+  }
 
   runApp(MyApp());
 }
